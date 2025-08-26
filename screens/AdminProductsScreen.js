@@ -75,9 +75,9 @@ const AdminProductsScreen = () => {
     );
   };
 
-  const handleEditProduct = (product) => {
-    navigation.navigate("AdminProductForm", { product });
-  };
+  // const handleEditProduct = (product) => {
+  //   navigation.navigate("AdminProductForm", { product });
+  // };
 
   const handleToggleStock = (productId) => {
     Alert.alert("Success", "Product stock status updated");
@@ -108,12 +108,12 @@ const AdminProductsScreen = () => {
         </View>
       </View>
       <View style={styles.productActions}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: COLORS.PRIMARY }]}
           onPress={() => handleEditProduct(item)}
         >
           <Ionicons name="create-outline" size={20} color={COLORS.WHITE} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: COLORS.WARNING }]}
           onPress={() => handleToggleStock(item.id)}
@@ -191,7 +191,9 @@ const AdminProductsScreen = () => {
       <FlatList
         data={filteredProducts}
         renderItem={renderProductItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item, index) =>
+          (item?.id ?? item?._id ?? index).toString()
+        }
         ListHeaderComponent={renderHeader}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

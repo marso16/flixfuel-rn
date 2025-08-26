@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import ApiService from "../services/api";
 import {
   COLORS,
   FONTS,
@@ -30,49 +31,6 @@ const AdminOrdersScreen = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-
-  // Mock orders data
-  const mockOrders = [
-    {
-      id: "ORD-001",
-      customer: "John Doe",
-      email: "john@example.com",
-      date: "2024-01-15",
-      status: ORDER_STATUS.PENDING,
-      total: 129.97,
-      items: [
-        { name: "Wireless Headphones", quantity: 1, price: 99.99 },
-        { name: "Phone Case", quantity: 2, price: 14.99 },
-      ],
-    },
-    {
-      id: "ORD-002",
-      customer: "Jane Smith",
-      email: "jane@example.com",
-      date: "2024-01-20",
-      status: ORDER_STATUS.SHIPPED,
-      total: 89.99,
-      items: [{ name: "Running Shoes", quantity: 1, price: 89.99 }],
-    },
-    {
-      id: "ORD-003",
-      customer: "Bob Johnson",
-      email: "bob@example.com",
-      date: "2024-01-25",
-      status: ORDER_STATUS.DELIVERED,
-      total: 199.99,
-      items: [{ name: "Smart Watch", quantity: 1, price: 199.99 }],
-    },
-    {
-      id: "ORD-004",
-      customer: "Alice Brown",
-      email: "alice@example.com",
-      date: "2024-01-28",
-      status: ORDER_STATUS.PROCESSING,
-      total: 159.98,
-      items: [{ name: "Bluetooth Speaker", quantity: 2, price: 79.99 }],
-    },
-  ];
 
   const statusOptions = [
     { value: "all", label: "All Orders" },
@@ -99,9 +57,8 @@ const AdminOrdersScreen = () => {
   const loadOrders = async () => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setOrders(mockOrders);
+      const data = await ApiService.request("/orders");
+      setOrders(data.orders || []);
     } catch (error) {
       Alert.alert("Error", "Failed to load orders");
       console.error("Load orders error:", error);
@@ -142,14 +99,24 @@ const AdminOrdersScreen = () => {
       { text: "Cancel", style: "cancel" },
       {
         text: "Update",
-        onPress: () => {
-          // Here you would call your API to update the order status
-          setOrders((prevOrders) =>
-            prevOrders.map((order) =>
-              order.id === orderId ? { ...order, status: newStatus } : order
-            )
-          );
-          Alert.alert("Success", "Order status updated successfully");
+        onPress: async () => {
+          try {
+            const data = await ApiService.request(`/orders/${orderId}/status`, {
+              method: "PUT",
+              body: JSON.stringify({ status: newStatus }),
+            });
+
+            setOrders((prevOrders) =>
+              prevOrders.map((order) =>
+                order.id === orderId ? { ...order, status: newStatus } : order
+              )
+            );
+
+            Alert.alert("Success", "Order status updated successfully");
+          } catch (error) {
+            Alert.alert("Error", "Failed to update status");
+            console.error("Update status error:", error);
+          }
         },
       },
     ]);

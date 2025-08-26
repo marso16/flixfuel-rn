@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import ApiService from "../services/api";
 import {
   COLORS,
   FONTS,
@@ -37,44 +38,6 @@ const AdminDashboardScreen = () => {
     ordersByStatus: {},
   });
 
-  // Mock dashboard data
-  const mockDashboardData = {
-    totalOrders: 156,
-    totalProducts: 24,
-    totalUsers: 89,
-    totalRevenue: 12450.75,
-    recentOrders: [
-      {
-        id: "ORD-001",
-        customer: "John Doe",
-        total: 129.99,
-        status: ORDER_STATUS.PENDING,
-      },
-      {
-        id: "ORD-002",
-        customer: "Jane Smith",
-        total: 89.99,
-        status: ORDER_STATUS.SHIPPED,
-      },
-      {
-        id: "ORD-003",
-        customer: "Bob Johnson",
-        total: 199.99,
-        status: ORDER_STATUS.DELIVERED,
-      },
-    ],
-    lowStockProducts: [
-      { id: 1, name: "Wireless Headphones", stock: 3 },
-      { id: 2, name: "Smart Watch", stock: 1 },
-    ],
-    ordersByStatus: {
-      [ORDER_STATUS.PENDING]: 12,
-      [ORDER_STATUS.PROCESSING]: 8,
-      [ORDER_STATUS.SHIPPED]: 15,
-      [ORDER_STATUS.DELIVERED]: 121,
-    },
-  };
-
   useEffect(() => {
     if (user?.role !== USER_ROLES.ADMIN) {
       navigation.goBack();
@@ -86,9 +49,42 @@ const AdminDashboardScreen = () => {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setDashboardData(mockDashboardData);
+
+      // ------------------ Fetch Data ------------------
+      const [orders, products, users] = await Promise.all([
+        ApiService.getAllOrders(),
+        ApiService.getAllProducts(),
+        ApiService.getAllUsers(),
+      ]);
+
+      // Total revenue
+      const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+
+      // Recent orders (most recent 5)
+      const recentOrders = orders
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
+      // Low stock products (stock <= 5)
+      const lowStockProducts = products.filter((p) => p.stock <= 5);
+
+      // Orders by status
+      const ordersByStatus = {};
+      Object.values(ORDER_STATUS).forEach((status) => {
+        ordersByStatus[status] = orders.filter(
+          (o) => o.status === status
+        ).length;
+      });
+
+      setDashboardData({
+        totalOrders: orders.length,
+        totalProducts: products.length,
+        totalUsers: users.length,
+        totalRevenue,
+        recentOrders,
+        lowStockProducts,
+        ordersByStatus,
+      });
     } catch (error) {
       console.error("Dashboard data error:", error);
     } finally {
@@ -132,10 +128,12 @@ const AdminDashboardScreen = () => {
     <View key={order.id} style={styles.recentOrderItem}>
       <View style={styles.recentOrderLeft}>
         <Text style={styles.recentOrderId}>{order.id}</Text>
-        <Text style={styles.recentOrderCustomer}>{order.customer}</Text>
+        <Text style={styles.recentOrderCustomer}>
+          {order.customerName || order.customer?.firstName}
+        </Text>
       </View>
       <View style={styles.recentOrderRight}>
-        <Text style={styles.recentOrderTotal}>${order.total}</Text>
+        <Text style={styles.recentOrderTotal}>${order.total.toFixed(2)}</Text>
         <View
           style={[
             styles.statusBadge,

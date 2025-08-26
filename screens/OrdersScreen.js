@@ -11,42 +11,15 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import ApiService from "../services/api";
 import { COLORS, FONTS, ORDER_STATUS, SPACING } from "../utils/constants";
 
 const OrdersScreen = () => {
   const navigation = useNavigation();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Mock orders data
-  const mockOrders = [
-    {
-      id: "ORD-001",
-      date: "2024-01-15",
-      status: ORDER_STATUS.DELIVERED,
-      total: 129.97,
-      items: [
-        { id: 1, name: "Wireless Headphones", quantity: 1, price: 99.99 },
-        { id: 2, name: "Phone Case", quantity: 2, price: 14.99 },
-      ],
-    },
-    {
-      id: "ORD-002",
-      date: "2024-01-20",
-      status: ORDER_STATUS.SHIPPED,
-      total: 89.99,
-      items: [{ id: 3, name: "Running Shoes", quantity: 1, price: 89.99 }],
-    },
-    {
-      id: "ORD-003",
-      date: "2024-01-25",
-      status: ORDER_STATUS.PROCESSING,
-      total: 199.99,
-      items: [{ id: 4, name: "Smart Watch", quantity: 1, price: 199.99 }],
-    },
-  ];
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -56,16 +29,23 @@ const OrdersScreen = () => {
       ]);
       return;
     }
-
     loadOrders();
   }, [isAuthenticated]);
 
   const loadOrders = async () => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setOrders(mockOrders);
+      const data = await ApiService.request("/orders");
+
+      const safeOrders = (data.orders || []).map((order) => ({
+        id: order._id ?? "N/A",
+        items: order.orderItems ?? [],
+        total: order.totalPrice ?? 0,
+        status: order.status ?? "UNKNOWN",
+        date: order.createdAt ?? null,
+      }));
+
+      setOrders(safeOrders);
     } catch (error) {
       Alert.alert("Error", "Failed to load orders");
       console.error("Load orders error:", error);
@@ -101,29 +81,32 @@ const OrdersScreen = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return isNaN(date.getTime())
+      ? "Date not available"
+      : date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
   };
 
-  const renderOrderItem = (order) => (
+  const renderOrderItem = (order, index) => (
     <TouchableOpacity
-      key={order.id}
+      key={order.id ?? index}
       style={styles.orderCard}
       onPress={() => {
-        // Navigate to order details (you can implement this screen)
         Alert.alert(
           "Order Details",
-          `Order ID: ${order.id}\nStatus: ${order.status}`
+          `Order ID: ${order.id ?? "N/A"}\nStatus: ${order.status ?? "Unknown"}`
         );
       }}
     >
       <View style={styles.orderHeader}>
         <View>
-          <Text style={styles.orderId}>Order #{order.id}</Text>
-          <Text style={styles.orderDate}>{formatDate(order.date)}</Text>
+          <Text style={styles.orderId}>Order #{order.id ?? "N/A"}</Text>
+          <Text style={styles.orderDate}>
+            {order.date ? formatDate(order.date) : "Date not available"}
+          </Text>
         </View>
         <View style={styles.statusContainer}>
           <View
@@ -132,21 +115,25 @@ const OrdersScreen = () => {
               { backgroundColor: getStatusColor(order.status) },
             ]}
           >
-            <Text style={styles.statusText}>{order.status.toUpperCase()}</Text>
+            <Text style={styles.statusText}>
+              {order.status ? order.status.toUpperCase() : "UNKNOWN"}
+            </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.orderItems}>
-        {order.items.map((item, index) => (
-          <Text key={index} style={styles.itemText}>
-            {item.quantity}x {item.name}
+        {(order.items || []).map((item, idx) => (
+          <Text key={item._id ?? idx} style={styles.itemText}>
+            {item.quantity ?? 0}x {item.name ?? "Unnamed Item"}
           </Text>
         ))}
       </View>
 
       <View style={styles.orderFooter}>
-        <Text style={styles.totalText}>Total: ${order.total.toFixed(2)}</Text>
+        <Text style={styles.totalText}>
+          Total: ${order.total?.toFixed(2) ?? "0.00"}
+        </Text>
         <TouchableOpacity style={styles.viewButton}>
           <Text style={styles.viewButtonText}>View Details</Text>
         </TouchableOpacity>
@@ -212,10 +199,7 @@ const OrdersScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.LIGHT,
-  },
+  container: { flex: 1, backgroundColor: COLORS.LIGHT },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
@@ -265,9 +249,7 @@ const styles = StyleSheet.create({
     color: COLORS.GRAY[600],
     marginTop: SPACING.EXTRA_SMALL,
   },
-  statusContainer: {
-    alignItems: "flex-end",
-  },
+  statusContainer: { alignItems: "flex-end" },
   statusBadge: {
     paddingHorizontal: SPACING.SMALL,
     paddingVertical: SPACING.EXTRA_SMALL,
@@ -278,9 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.WEIGHTS.BOLD,
     color: COLORS.WHITE,
   },
-  orderItems: {
-    marginBottom: SPACING.MEDIUM,
-  },
+  orderItems: { marginBottom: SPACING.MEDIUM },
   itemText: {
     fontSize: FONTS.SIZES.MEDIUM,
     color: COLORS.GRAY[700],

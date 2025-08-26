@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,21 +14,42 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { COLORS, FONTS, SPACING, USER_ROLES } from "../utils/constants";
+import ApiService from "../services/api";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || "",
-    lastName: user?.lastName || "",
+    name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
   });
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await ApiService.getProfile();
+      const userData = response.user || response.data;
+      setProfileData({
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+      });
+      if (updateUser) {
+        updateUser(userData);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setProfileData((prev) => ({
@@ -40,8 +61,12 @@ const ProfileScreen = () => {
   const handleSaveProfile = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call to update profile
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await ApiService.updateProfile(profileData);
+      const updatedUser = response.user || response.data;
+      
+      if (updateUser) {
+        updateUser(updatedUser);
+      }
 
       Alert.alert("Success", "Profile updated successfully!");
       setIsEditing(false);
@@ -150,7 +175,7 @@ const ProfileScreen = () => {
           <Ionicons name="person-circle" size={80} color={COLORS.PRIMARY} />
         </View>
         <Text style={styles.userName}>
-          {profileData.firstName} {profileData.lastName}
+          {profileData.name}
         </Text>
         <Text style={styles.userEmail}>{profileData.email}</Text>
         {user?.role === USER_ROLES.ADMIN && (
@@ -174,8 +199,7 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {renderProfileField("firstName", "First Name")}
-        {renderProfileField("lastName", "Last Name")}
+        {renderProfileField("name", "Full Name")}
         {renderProfileField("email", "Email Address", "email-address")}
         {renderProfileField("phone", "Phone Number", "phone-pad")}
 

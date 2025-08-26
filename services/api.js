@@ -5,149 +5,238 @@ const API_BASE_URL = "https://flixfuel-server.vercel.app";
 class ApiService {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    const token = await AsyncStorage.getItem("token");
+
     const config = {
       headers: {
         "Content-Type": "application/json",
-        ...options.headers,
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       ...options,
     };
 
-    const token = await AsyncStorage.getItem("token");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-
     try {
       const response = await fetch(url, config);
 
+      // Try parsing JSON even on error to get server-provided error message
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorMessage =
+          data?.message || `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
-      return await response.json();
+      return data;
     } catch (error) {
       console.error("API request failed:", error);
       throw error;
     }
   }
 
-  // Auth endpoints
-  async login(credentials) {
-    return this.request("/auth/login", {
+  // ---------------- Auth ----------------
+  sendOTP = (userData) =>
+    this.request("/auth/send-otp", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  verifyOTP = (otpData) =>
+    this.request("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify(otpData),
+    });
+  resendOTP = (email) =>
+    this.request("/auth/resend-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  register = (userData) =>
+    this.request("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  login = (credentials) =>
+    this.request("/auth/login", {
       method: "POST",
       body: JSON.stringify(credentials),
     });
-  }
-
-  async register(userData) {
-    return this.request("/auth/register", {
-      method: "POST",
+  getProfile = () => this.request("/auth/profile");
+  updateProfile = (userData) =>
+    this.request("/auth/profile", {
+      method: "PUT",
       body: JSON.stringify(userData),
     });
-  }
-
-  async logout() {
-    return this.request("/auth/logout", {
-      method: "POST",
+  changePassword = (passwordData) =>
+    this.request("/auth/change-password", {
+      method: "PUT",
+      body: JSON.stringify(passwordData),
     });
-  }
+  verifyToken = () => this.request("/auth/verify");
+  forgotPassword = (email) =>
+    this.request("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  resetPassword = (resetData) =>
+    this.request("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify(resetData),
+    });
+  googleLogin = (token) =>
+    this.request("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  linkGoogleAccount = (token) =>
+    this.request("/auth/link-google", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  unlinkGoogleAccount = () =>
+    this.request("/auth/unlink-google", { method: "DELETE" });
+  logout = async () => {
+    await AsyncStorage.removeItem("token");
+    return { success: true };
+  };
 
-  // Products endpoints
-  async getProducts() {
-    return this.request("/products");
-  }
+  // ---------------- Products ----------------
+  getProducts = (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return this.request(`/products${query ? `?${query}` : ""}`);
+  };
+  getProduct = (id) => this.request(`/products/${id}`);
+  getProductsByCategory = (category) =>
+    this.request(`/products?category=${encodeURIComponent(category)}`);
+  searchProducts = (query) =>
+    this.request(`/products/search?q=${encodeURIComponent(query)}`);
+  getFeaturedProducts = () => this.request("/products/featured/list");
+  getCategories = () => this.request("/categories");
 
-  async getProduct(id) {
-    return this.request(`/products/${id}`);
-  }
-
-  async getProductsByCategory(category) {
-    return this.request(`/products?category=${category}`);
-  }
-
-  async searchProducts(query) {
-    return this.request(`/products/search?q=${encodeURIComponent(query)}`);
-  }
-
-  async getFeaturedProducts() {
-    return this.request("/products/featured");
-  }
-
-  async getCategories() {
-    return this.request("/categories");
-  }
-
-  // Orders endpoints
-  async createOrder(orderData) {
-    return this.request("/orders", {
+  // ---------------- Orders ----------------
+  createOrder = (orderData) =>
+    this.request("/orders", {
       method: "POST",
       body: JSON.stringify(orderData),
     });
-  }
+  getUserOrders = () => this.request("/orders/my-orders");
+  getOrder = (orderId) => this.request(`/orders/${orderId}`);
+  cancelOrder = (orderId) =>
+    this.request(`/orders/${orderId}/cancel`, { method: "PUT" });
 
-  async getOrders(userId) {
-    return this.request(`/orders/user/${userId}`);
-  }
-
-  async getOrder(orderId) {
-    return this.request(`/orders/${orderId}`);
-  }
-
-  // User endpoints
-  async getUserProfile(userId) {
-    return this.request(`/users/${userId}`);
-  }
-
-  async updateUserProfile(userId, userData) {
-    return this.request(`/users/${userId}`, {
-      method: "PUT",
-      body: JSON.stringify(userData),
-    });
-  }
-
-  // Admin endpoints
-  async getAllOrders() {
-    return this.request("/admin/orders");
-  }
-
-  async updateOrderStatus(orderId, status) {
-    return this.request(`/admin/orders/${orderId}/status`, {
+  // ---------------- Admin ----------------
+  getAllOrders = () => this.request("/orders");
+  updateOrderStatus = (orderId, status) =>
+    this.request(`/orders/${orderId}/status`, {
       method: "PUT",
       body: JSON.stringify({ status }),
     });
-  }
+  deleteAllOrders = () => this.request("/orders", { method: "DELETE" });
 
-  async createProduct(productData) {
-    return this.request("/admin/products", {
+  createProduct = (productData) =>
+    this.request("/products", {
       method: "POST",
       body: JSON.stringify(productData),
     });
-  }
-
-  async updateProduct(productId, productData) {
-    return this.request(`/admin/products/${productId}`, {
+  updateProduct = (productId, productData) =>
+    this.request(`/products/${productId}`, {
       method: "PUT",
       body: JSON.stringify(productData),
     });
-  }
+  deleteProduct = (productId) =>
+    this.request(`/products/${productId}`, { method: "DELETE" });
 
-  async deleteProduct(productId) {
-    return this.request(`/admin/products/${productId}`, {
-      method: "DELETE",
-    });
-  }
-
-  async getAllUsers() {
-    return this.request("/admin/users");
-  }
-
-  async updateUserRole(userId, role) {
-    return this.request(`/admin/users/${userId}/role`, {
+  getAllUsers = () => this.request("/auth/users");
+  deleteOneUser = (userId) =>
+    this.request(`/auth/users/${userId}`, { method: "DELETE" });
+  deleteAllUsers = () => this.request("/auth/users", { method: "DELETE" });
+  updateUserRole = (userId, role) =>
+    this.request(`/auth/users/${userId}/role`, {
       method: "PUT",
       body: JSON.stringify({ role }),
     });
-  }
+
+  // ---------------- Notifications ----------------
+  getNotifications = () => this.request("/notifications");
+  getUnreadCount = () => this.request("/notifications/unread-count");
+  markNotificationAsRead = (id) =>
+    this.request(`/notifications/${id}/read`, { method: "PATCH" });
+  markMultipleNotificationsAsRead = (ids) =>
+    this.request("/notifications/read", {
+      method: "PATCH",
+      body: JSON.stringify({ notificationIds: ids }),
+    });
+  markAllNotificationsAsRead = () =>
+    this.request("/notifications/read-all", { method: "PATCH" });
+  deleteNotification = (id) =>
+    this.request(`/notifications/${id}`, { method: "DELETE" });
+  deleteMultipleNotifications = (ids) =>
+    this.request("/notifications", {
+      method: "DELETE",
+      body: JSON.stringify({ notificationIds: ids }),
+    });
+
+  // ---------------- Cart ----------------
+  getUserCart = () => this.request("/cart");
+  addItemToCart = (productId, quantity) =>
+    this.request("/cart/add", {
+      method: "POST",
+      body: JSON.stringify({ productId, quantity }),
+    });
+  updateCartItemQuantity = (productId, quantity) =>
+    this.request("/cart/update", {
+      method: "PUT",
+      body: JSON.stringify({ productId, quantity }),
+    });
+  removeItemFromCart = (productId) =>
+    this.request(`/cart/remove/${productId}`, { method: "DELETE" });
+  clearCart = () => this.request("/cart/clear", { method: "DELETE" });
+  getCartItemCount = () => this.request("/cart/count");
+
+  // ---------------- Payment ----------------
+  createPaymentIntent = (orderId) =>
+    this.request("/payment/create-intent", {
+      method: "POST",
+      body: JSON.stringify({ orderId }),
+    });
+  confirmPayment = (paymentIntentId, orderId) =>
+    this.request("/payment/confirm", {
+      method: "POST",
+      body: JSON.stringify({ paymentIntentId, orderId }),
+    });
+  getStripePublishableKey = () => this.request("/payment/config");
+  createRefund = (orderId, amount) =>
+    this.request("/payment/refund", {
+      method: "POST",
+      body: JSON.stringify({ orderId, amount }),
+    });
+  getPaymentHistory = () => this.request("/payment/history");
+
+  // ---------------- Wishlist ----------------
+  getWishlist = () => this.request("/wishlist");
+  addToWishlist = (productId, notes) =>
+    this.request(`/wishlist/${productId}`, {
+      method: "POST",
+      body: JSON.stringify({ notes }),
+    });
+  removeFromWishlist = (productId) =>
+    this.request(`/wishlist/${productId}`, { method: "DELETE" });
+  updateWishlist = (wishlistData) =>
+    this.request("/wishlist", {
+      method: "PUT",
+      body: JSON.stringify(wishlistData),
+    });
+  generateShareToken = () =>
+    this.request("/wishlist/share", { method: "POST" });
+  getSharedWishlist = (token) => this.request(`/wishlist/shared/${token}`);
+  checkWishlistStatus = (productId) =>
+    this.request(`/wishlist/check/${productId}`);
+  clearWishlist = () => this.request("/wishlist", { method: "DELETE" });
+  moveToCart = (productId, quantity) =>
+    this.request(`/wishlist/${productId}/move-to-cart`, {
+      method: "POST",
+      body: JSON.stringify({ quantity }),
+    });
 }
 
 export default new ApiService();

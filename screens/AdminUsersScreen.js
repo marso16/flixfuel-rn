@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import ApiService from "../services/api";
 import { COLORS, FONTS, SPACING, USER_ROLES } from "../utils/constants";
 
 const AdminUsersScreen = () => {
@@ -24,58 +25,6 @@ const AdminUsersScreen = () => {
   const [selectedRole, setSelectedRole] = useState("all");
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
-
-  // Mock users data
-  const mockUsers = [
-    {
-      id: 1,
-      firstName: "John",
-      lastName: "Doe",
-      email: "john@example.com",
-      phone: "+1234567890",
-      role: USER_ROLES.CUSTOMER,
-      joinDate: "2024-01-15",
-      isActive: true,
-      totalOrders: 5,
-      totalSpent: 450.75,
-    },
-    {
-      id: 2,
-      firstName: "Jane",
-      lastName: "Smith",
-      email: "jane@example.com",
-      phone: "+1234567891",
-      role: USER_ROLES.CUSTOMER,
-      joinDate: "2024-01-20",
-      isActive: true,
-      totalOrders: 3,
-      totalSpent: 289.99,
-    },
-    {
-      id: 3,
-      firstName: "Admin",
-      lastName: "User",
-      email: "admin@flixfuel.com",
-      phone: "+1234567892",
-      role: USER_ROLES.ADMIN,
-      joinDate: "2024-01-01",
-      isActive: true,
-      totalOrders: 0,
-      totalSpent: 0,
-    },
-    {
-      id: 4,
-      firstName: "Bob",
-      lastName: "Johnson",
-      email: "bob@example.com",
-      phone: "+1234567893",
-      role: USER_ROLES.CUSTOMER,
-      joinDate: "2024-01-25",
-      isActive: false,
-      totalOrders: 1,
-      totalSpent: 99.99,
-    },
-  ];
 
   const roleOptions = [
     { value: "all", label: "All Users" },
@@ -98,9 +47,8 @@ const AdminUsersScreen = () => {
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUsers(mockUsers);
+      const data = await ApiService.request("/users"); // GET /users
+      setUsers(data.users || []);
     } catch (error) {
       Alert.alert("Error", "Failed to load users");
       console.error("Load users error:", error);
@@ -136,7 +84,7 @@ const AdminUsersScreen = () => {
     setRefreshing(false);
   };
 
-  const handleToggleUserStatus = (userId, currentStatus) => {
+  const handleToggleUserStatus = async (userId, currentStatus) => {
     const action = currentStatus ? "deactivate" : "activate";
     Alert.alert(
       "Confirm Action",
@@ -145,35 +93,58 @@ const AdminUsersScreen = () => {
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm",
-          onPress: () => {
-            setUsers((prevUsers) =>
-              prevUsers.map((user) =>
-                user.id === userId
-                  ? { ...user, isActive: !currentStatus }
-                  : user
-              )
-            );
-            Alert.alert("Success", `User ${action}d successfully`);
+          onPress: async () => {
+            try {
+              await ApiService.request(`/users/${userId}/status`, {
+                method: "PUT",
+                body: JSON.stringify({ isActive: !currentStatus }),
+              });
+
+              setUsers((prev) =>
+                prev.map((user) =>
+                  user.id === userId
+                    ? { ...user, isActive: !currentStatus }
+                    : user
+                )
+              );
+
+              Alert.alert("Success", `User ${action}d successfully`);
+            } catch (error) {
+              Alert.alert("Error", "Failed to update user status");
+              console.error("Toggle status error:", error);
+            }
           },
         },
       ]
     );
   };
 
-  const handleChangeUserRole = (userId, currentRole) => {
+  const handleChangeUserRole = async (userId, currentRole) => {
     const newRole =
       currentRole === USER_ROLES.ADMIN ? USER_ROLES.CUSTOMER : USER_ROLES.ADMIN;
+
     Alert.alert("Change User Role", `Change user role to ${newRole}?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Change",
-        onPress: () => {
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              user.id === userId ? { ...user, role: newRole } : user
-            )
-          );
-          Alert.alert("Success", "User role updated successfully");
+        onPress: async () => {
+          try {
+            await ApiService.request(`/users/${userId}/role`, {
+              method: "PUT",
+              body: JSON.stringify({ role: newRole }),
+            });
+
+            setUsers((prev) =>
+              prev.map((user) =>
+                user.id === userId ? { ...user, role: newRole } : user
+              )
+            );
+
+            Alert.alert("Success", "User role updated successfully");
+          } catch (error) {
+            Alert.alert("Error", "Failed to change user role");
+            console.error("Change role error:", error);
+          }
         },
       },
     ]);
@@ -188,11 +159,17 @@ const AdminUsersScreen = () => {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            setUsers((prevUsers) =>
-              prevUsers.filter((user) => user.id !== userId)
-            );
-            Alert.alert("Success", "User deleted successfully");
+          onPress: async () => {
+            try {
+              await ApiService.request(`/users/${userId}`, {
+                method: "DELETE",
+              });
+              setUsers((prev) => prev.filter((user) => user.id !== userId));
+              Alert.alert("Success", "User deleted successfully");
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete user");
+              console.error("Delete user error:", error);
+            }
           },
         },
       ]
