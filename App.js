@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useEffect } from "react";
 import { AuthProvider } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
+import { CartProvider, useCart } from "./context/CartContext";
 import { ProductsProvider } from "./context/ProductsContext";
 import AdminDashboardScreen from "./screens/AdminDashboardScreen";
 import AdminOrdersScreen from "./screens/AdminOrdersScreen";
@@ -53,65 +54,77 @@ function MainTabs() {
   );
 }
 
+function AppContent() {
+  const { loadCart } = useCart();
+
+  useEffect(() => {
+    loadCart();
+  }, []);
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Main"
+          component={MainTabs}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen}
+          options={{ title: "Product Details" }}
+        />
+        <Stack.Screen
+          name="Checkout"
+          component={CheckoutScreen}
+          options={{ title: "Checkout" }}
+        />
+        <Stack.Screen
+          name="Orders"
+          component={OrdersScreen}
+          options={{ title: "My Orders" }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ title: "Login" }}
+        />
+        <Stack.Screen
+          name="Register"
+          component={RegisterScreen}
+          options={{ title: "Create Account" }}
+        />
+        <Stack.Screen
+          name="AdminDashboard"
+          component={AdminDashboardScreen}
+          options={{ title: "Admin Dashboard" }}
+        />
+        <Stack.Screen
+          name="AdminProducts"
+          component={AdminProductsScreen}
+          options={{ title: "Manage Products" }}
+        />
+        <Stack.Screen
+          name="AdminOrders"
+          component={AdminOrdersScreen}
+          options={{ title: "Manage Orders" }}
+        />
+        <Stack.Screen
+          name="AdminUsers"
+          component={AdminUsersScreen}
+          options={{ title: "Manage Users" }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <ProductsProvider>
         <CartProvider>
-          <NavigationContainer>
-            <Stack.Navigator>
-              <Stack.Screen
-                name="Main"
-                component={MainTabs}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="ProductDetail"
-                component={ProductDetailScreen}
-                options={{ title: "Product Details" }}
-              />
-              <Stack.Screen
-                name="Checkout"
-                component={CheckoutScreen}
-                options={{ title: "Checkout" }}
-              />
-              <Stack.Screen
-                name="Orders"
-                component={OrdersScreen}
-                options={{ title: "My Orders" }}
-              />
-              <Stack.Screen
-                name="Login"
-                component={LoginScreen}
-                options={{ title: "Login" }}
-              />
-              <Stack.Screen
-                name="Register"
-                component={RegisterScreen}
-                options={{ title: "Create Account" }}
-              />
-              <Stack.Screen
-                name="AdminDashboard"
-                component={AdminDashboardScreen}
-                options={{ title: "Admin Dashboard" }}
-              />
-              <Stack.Screen
-                name="AdminProducts"
-                component={AdminProductsScreen}
-                options={{ title: "Manage Products" }}
-              />
-              <Stack.Screen
-                name="AdminOrders"
-                component={AdminOrdersScreen}
-                options={{ title: "Manage Orders" }}
-              />
-              <Stack.Screen
-                name="AdminUsers"
-                component={AdminUsersScreen}
-                options={{ title: "Manage Users" }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
+          <AppContent />
         </CartProvider>
       </ProductsProvider>
     </AuthProvider>

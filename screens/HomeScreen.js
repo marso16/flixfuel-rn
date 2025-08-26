@@ -41,9 +41,7 @@ const HomeScreen = ({ navigation }) => {
       {/* Hero Banner */}
       <View style={styles.hero}>
         <Image
-          source={{
-            uri: "https://via.placeholder.com/400x200?text=FlixFuel+Sale",
-          }}
+          source={require("../assets/images/sale_banner.png")}
           style={styles.heroImage}
         />
         <View style={styles.heroContent}>
@@ -61,9 +59,9 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Shop by Category</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.map((category) => (
+          {categories.map((category, index) => (
             <TouchableOpacity
-              key={category}
+              key={`category-${index}`}
               style={styles.categoryCard}
               onPress={() => navigateToCategory(category)}
             >
@@ -82,9 +80,9 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Featured Products</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {featuredProducts.map((product) => (
+          {featuredProducts.map((product, index) => (
             <ProductCard
-              key={product.id}
+              key={`featured-${product._id || product.id || index}`}
               product={product}
               onPress={() => navigateToProduct(product)}
             />
@@ -96,9 +94,9 @@ const HomeScreen = ({ navigation }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>New Arrivals</Text>
         <View style={styles.productGrid}>
-          {products.slice(0, 4).map((product) => (
+          {products.slice(0, 4).map((product, index) => (
             <ProductCard
-              key={product.id}
+              key={`new-arrival-${product._id || product.id || index}`}
               product={product}
               onPress={() => navigateToProduct(product)}
             />
@@ -137,48 +135,71 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
-    textboxShadowColor: "rgba(0, 0, 0, 0.75)",
-    textboxShadowOffset: { width: -1, height: 1 },
-    textboxShadowRadius: 10,
   },
-  heroSubtitle: {
-    fontSize: 16,
-    color: "#fff",
-    marginBottom: 10,
-    textboxShadowColor: "rgba(0, 0, 0, 0.75)",
-    textboxShadowOffset: { width: -1, height: 1 },
-    textboxShadowRadius: 10,
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
   },
-  heroButton: {
+  banner: {
+    height: 200,
     backgroundColor: "#007bff",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderRadius: 15,
+    margin: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  heroButtonText: {
+  bannerText: {
     color: "#fff",
+    fontSize: 28,
     fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  bannerSubtext: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+    opacity: 0.9,
+  },
+  shopButton: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginTop: 15,
+  },
+  shopButtonText: {
+    color: "#007bff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 25,
     paddingHorizontal: 15,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
     marginBottom: 15,
     color: "#333",
   },
   categoryCard: {
-    alignItems: "center",
-    marginRight: 15,
     backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    boxShadowColor: "#000",
-    boxShadowOffset: { width: 0, height: 2 },
-    boxShadowOpacity: 0.1,
-    boxShadowRadius: 4,
+    borderRadius: 15,
+    padding: 20,
+    marginRight: 15,
+    alignItems: "center",
+    minWidth: 100,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
   categoryIcon: {
@@ -192,12 +213,14 @@ const styles = StyleSheet.create({
   },
   categoryIconText: {
     color: "#fff",
+    fontSize: 20,
     fontWeight: "bold",
-    fontSize: 18,
   },
   categoryName: {
     fontSize: 14,
+    fontWeight: "600",
     color: "#333",
+    textAlign: "center",
   },
   productGrid: {
     flexDirection: "row",

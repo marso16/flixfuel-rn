@@ -36,21 +36,21 @@ const CartScreen = () => {
     <View style={styles.container}>
       <ScrollView style={styles.itemsContainer}>
         {cartItems.map((item) => (
-          <View key={item.id} style={styles.cartItem}>
-            <Image source={{ uri: item.image }} style={styles.itemImage} />
+          <View key={item._id || item.id} style={styles.cartItem}>
+            <Image source={{ uri: item.images && item.images[0] ? item.images[0].url : "https://via.placeholder.com/150" }} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
-                  onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                  onPress={() => updateQuantity(item._id || item.id, item.quantity - 1)}
                   style={styles.quantityButton}
                 >
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantity}>{item.quantity}</Text>
                 <TouchableOpacity
-                  onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                  onPress={() => updateQuantity(item._id || item.id, item.quantity + 1)}
                   style={styles.quantityButton}
                 >
                   <Text style={styles.quantityButtonText}>+</Text>
@@ -58,7 +58,7 @@ const CartScreen = () => {
               </View>
             </View>
             <TouchableOpacity
-              onPress={() => removeFromCart(item.id)}
+              onPress={() => removeFromCart(item._id || item.id)}
               style={styles.removeButton}
             >
               <Text style={styles.removeButtonText}>×</Text>

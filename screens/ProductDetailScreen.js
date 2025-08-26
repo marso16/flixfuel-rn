@@ -14,12 +14,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const { addToCart, updateQuantity, cartItems } = useCart();
   const [quantity, setQuantity] = useState(1);
 
-  const cartItem = cartItems.find((item) => item.id === product.id);
+  const cartItem = cartItems.find((item) => (item._id || item.id) === (product._id || product.id));
   const currentQuantity = cartItem ? cartItem.quantity : 0;
 
   const handleAddToCart = () => {
     if (cartItem) {
-      updateQuantity(product.id, currentQuantity + quantity);
+      updateQuantity(product._id || product.id, currentQuantity + quantity);
     } else {
       addToCart({ ...product, quantity });
     }
@@ -39,7 +39,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <Image
-        source={{ uri: product.image }}
+        source={{ uri: product.images && product.images[0] ? product.images[0].url : "https://via.placeholder.com/150" }}
         style={styles.image}
         resizeMode="cover"
       />

@@ -12,7 +12,7 @@ const ProductCard = ({ product, onPress }) => {
     <View style={styles.card}>
       <TouchableOpacity onPress={onPress}>
         <Image
-          source={{ uri: product.image }}
+          source={{ uri: product.images && product.images[0] ? product.images[0].url : "https://via.placeholder.com/150" }}
           style={styles.image}
           resizeMode="cover"
         />
@@ -34,49 +34,54 @@ const ProductCard = ({ product, onPress }) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
-    borderRadius: 8,
-    margin: 10,
-    width: 160,
-    boxShadowColor: "#000",
-    boxShadowOffset: { width: 0, height: 2 },
-    boxShadowOpacity: 0.1,
-    boxShadowRadius: 4,
-    elevation: 3,
+    borderRadius: 15,
+    margin: 8,
+    width: 170,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    overflow: "hidden",
   },
   image: {
     width: "100%",
-    height: 120,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    height: 130,
   },
   info: {
-    padding: 10,
+    padding: 12,
   },
   name: {
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 5,
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 6,
+    color: "#333",
+    lineHeight: 20,
   },
   price: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#007bff",
+    marginBottom: 4,
   },
   category: {
     fontSize: 12,
     color: "#666",
-    marginTop: 5,
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   addButton: {
     backgroundColor: "#007bff",
-    padding: 10,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
+    paddingVertical: 12,
     alignItems: "center",
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   addButtonText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
 

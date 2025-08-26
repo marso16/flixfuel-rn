@@ -28,12 +28,15 @@ export const ProductsProvider = ({ children }) => {
 
       setProducts(Array.isArray(data.products) ? data.products : []);
 
-      const featured = await api.getFeaturedProducts();
+      const featured = [
+        { id: "1", name: "Featured Product 1", price: 100, category: "Electronics", images: [{ url: "https://via.placeholder.com/150" }] },
+        { id: "2", name: "Featured Product 2", price: 200, category: "Books", images: [{ url: "https://via.placeholder.com/150" }] },
+      ];
       setFeaturedProducts(
-        Array.isArray(featured.products) ? featured.products : []
+        Array.isArray(featured) ? featured : []
       );
 
-      const cats = await api.getCategories();
+      const cats = ["Electronics", "Books", "Clothing", "Home"];
       setCategories(Array.isArray(cats) ? cats : []);
     } catch (error) {
       console.error("Error loading products:", error);
@@ -42,7 +45,7 @@ export const ProductsProvider = ({ children }) => {
     }
   };
 
-  const getProductById = (id) => products.find((product) => product.id === id);
+  const getProductById = (id) => products.find((product) => product._id === id || product.id === id);
 
   const getProductsByCategory = (category) =>
     products.filter((product) => product.category === category);

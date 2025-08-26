@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const API_BASE_URL = "https://flixfuel-server.vercel.app";
 
 class ApiService {
@@ -10,6 +12,11 @@ class ApiService {
       },
       ...options,
     };
+
+    const token = await AsyncStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
 
     try {
       const response = await fetch(url, config);

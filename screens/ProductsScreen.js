@@ -113,9 +113,9 @@ const ProductsScreen = ({ route, navigation }) => {
       <ScrollView style={styles.productsContainer}>
         <View style={styles.productsGrid}>
           {Array.isArray(filteredProducts) && filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
+            filteredProducts.map((product, index) => (
               <ProductCard
-                key={product.id}
+                key={product._id || product.id || index}
                 product={product}
                 onPress={() => navigateToProduct(product)}
               />
@@ -142,26 +142,37 @@ const styles = StyleSheet.create({
   },
   categoryFilter: {
     backgroundColor: "#fff",
-    paddingVertical: 10,
+    paddingVertical: 15,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   categoryButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
     backgroundColor: "#f0f0f0",
-    marginRight: 10,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   categoryButtonActive: {
     backgroundColor: "#007bff",
+    borderColor: "#007bff",
   },
   categoryText: {
     color: "#333",
+    fontWeight: "500",
+    fontSize: 14,
   },
   categoryTextActive: {
     color: "#fff",
+    fontWeight: "600",
   },
   productsContainer: {
     flex: 1,
@@ -171,14 +182,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    paddingHorizontal: 5,
   },
   emptyState: {
-    padding: 20,
+    padding: 40,
     alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
   },
   emptyStateText: {
-    fontSize: 16,
+    fontSize: 18,
     color: "#666",
+    textAlign: "center",
+    lineHeight: 24,
   },
 });
 

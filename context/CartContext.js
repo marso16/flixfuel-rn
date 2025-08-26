@@ -12,13 +12,13 @@ const cartReducer = (state, action) => {
       };
     case "ADD_TO_CART":
       const existingItem = state.items.find(
-        (item) => item.id === action.payload.id
+        (item) => (item._id || item.id) === (action.payload._id || action.payload.id)
       );
       let newItems;
 
       if (existingItem) {
         newItems = state.items.map((item) =>
-          item.id === action.payload.id
+          (item._id || item.id) === (action.payload._id || action.payload.id)
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -36,7 +36,7 @@ const cartReducer = (state, action) => {
 
     case "REMOVE_FROM_CART":
       const filteredItems = state.items.filter(
-        (item) => item.id !== action.payload
+        (item) => (item._id || item.id) !== action.payload
       );
       AsyncStorage.setItem("cart", JSON.stringify(filteredItems));
       return {
@@ -46,7 +46,7 @@ const cartReducer = (state, action) => {
 
     case "UPDATE_QUANTITY":
       const updatedItems = state.items.map((item) =>
-        item.id === action.payload.id
+        (item._id || item.id) === action.payload.id
           ? { ...item, quantity: action.payload.quantity }
           : item
       );
