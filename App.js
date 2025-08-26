@@ -5,6 +5,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { ProductsProvider } from "./context/ProductsContext";
+import AdminDashboardScreen from "./screens/AdminDashboardScreen";
+import AdminOrdersScreen from "./screens/AdminOrdersScreen";
+import AdminProductsScreen from "./screens/AdminProductsScreen";
+import AdminUsersScreen from "./screens/AdminUsersScreen";
 import CartScreen from "./screens/CartScreen";
 import CheckoutScreen from "./screens/CheckoutScreen";
 import HomeScreen from "./screens/HomeScreen";
@@ -85,6 +89,26 @@ export default function App() {
                 name="Register"
                 component={RegisterScreen}
                 options={{ title: "Create Account" }}
+              />
+              <Stack.Screen
+                name="AdminDashboard"
+                component={AdminDashboardScreen}
+                options={{ title: "Admin Dashboard" }}
+              />
+              <Stack.Screen
+                name="AdminProducts"
+                component={AdminProductsScreen}
+                options={{ title: "Manage Products" }}
+              />
+              <Stack.Screen
+                name="AdminOrders"
+                component={AdminOrdersScreen}
+                options={{ title: "Manage Orders" }}
+              />
+              <Stack.Screen
+                name="AdminUsers"
+                component={AdminUsersScreen}
+                options={{ title: "Manage Users" }}
               />
             </Stack.Navigator>
           </NavigationContainer>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -11,36 +11,48 @@ import SearchBar from "../components/SearchBar";
 import { useProducts } from "../context/ProductsContext";
 
 const ProductsScreen = ({ route, navigation }) => {
-  const { products, categories, searchProducts } = useProducts();
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const { products = [], categories = [], searchProducts } = useProducts();
+
+  // Initialize filteredProducts safely
+  const [filteredProducts, setFilteredProducts] = useState(
+    Array.isArray(products) ? products : []
+  );
   const [selectedCategory, setSelectedCategory] = useState(
     route.params?.category || "All"
   );
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Update navigation title
   React.useLayoutEffect(() => {
     navigation.setOptions({
       title: selectedCategory === "All" ? "All Products" : selectedCategory,
     });
   }, [navigation, selectedCategory]);
 
+  // Keep filteredProducts in sync if products change
+  useEffect(() => {
+    setFilteredProducts(Array.isArray(products) ? products : []);
+  }, [products]);
+
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query) {
-      setFilteredProducts(searchProducts(query));
+      const result = searchProducts(query);
+      setFilteredProducts(Array.isArray(result) ? result : []);
     } else {
-      setFilteredProducts(products);
+      setFilteredProducts(Array.isArray(products) ? products : []);
     }
   };
 
   const filterByCategory = (category) => {
     setSelectedCategory(category);
     if (category === "All") {
-      setFilteredProducts(products);
+      setFilteredProducts(Array.isArray(products) ? products : []);
     } else {
-      setFilteredProducts(
-        products.filter((product) => product.category === category)
+      const result = products.filter(
+        (product) => product.category === category
       );
+      setFilteredProducts(Array.isArray(result) ? result : []);
     }
   };
 
@@ -74,48 +86,50 @@ const ProductsScreen = ({ route, navigation }) => {
             All
           </Text>
         </TouchableOpacity>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryButton,
-              selectedCategory === category && styles.categoryButtonActive,
-            ]}
-            onPress={() => filterByCategory(category)}
-          >
-            <Text
+
+        {Array.isArray(categories) &&
+          categories.map((category) => (
+            <TouchableOpacity
+              key={category}
               style={[
-                styles.categoryText,
-                selectedCategory === category && styles.categoryTextActive,
+                styles.categoryButton,
+                selectedCategory === category && styles.categoryButtonActive,
               ]}
+              onPress={() => filterByCategory(category)}
             >
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.categoryTextActive,
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
       </ScrollView>
 
       {/* Products Grid */}
       <ScrollView style={styles.productsContainer}>
         <View style={styles.productsGrid}>
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onPress={() => navigateToProduct(product)}
-            />
-          ))}
+          {Array.isArray(filteredProducts) && filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onPress={() => navigateToProduct(product)}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                {searchQuery
+                  ? `No products found for "${searchQuery}"`
+                  : "No products available"}
+              </Text>
+            </View>
+          )}
         </View>
-
-        {filteredProducts.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              {searchQuery
-                ? `No products found for "${searchQuery}"`
-                : "No products available"}
-            </Text>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
